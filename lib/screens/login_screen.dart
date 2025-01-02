@@ -59,11 +59,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       errorText: _errorMessage,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.blue),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.blue, width: 2), // Cor da borda focada (ao clicar)
                       ),
                       suffixIcon: const Icon(Icons.person),
                     ),
@@ -78,12 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       errorText: _errorMessage,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.blue),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Colors.blue, width: 2), // Cor da borda focada (ao clicar)
-                    ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
