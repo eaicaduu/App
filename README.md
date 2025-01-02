@@ -1,16 +1,27 @@
-# app
+Aplicativo de Registro de Ponto
 
-A new Flutter project.
+Data 02/01/2025 
+Desenvolvivo por: Carlos Gregorio
 
-## Getting Started
+Este é um aplicativo desenvolvido 
+com Dart e Flutter, projetado para 
+registrar e gerenciar o ponto 
+dos usuários em um sistema de controle
+de jornada de trabalho.
+ 
+O aplicativo permite que os usuários 
+façam o registro de entrada, saída, 
+e pausas durante o expediente,
+além de visualizar o histórico
+de seus registros
 
-This project is a starting point for a Flutter application.
+Tecnologias Utilizadas
 
-A few resources to get you started if this is your first Flutter project:
+Flutter: Framework para construção
+de interfaces nativas multiplataforma.
+Dart: Linguagem de programação utilizada
+para o desenvolvimento do Flutter.
+Supabase: Banco de dados em tempo real
+e backend como serviço, utilizado
+para armazenar os registros de ponto.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
