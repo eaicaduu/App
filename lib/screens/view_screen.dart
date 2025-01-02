@@ -12,6 +12,7 @@ class ViewScreen extends StatefulWidget {
   const ViewScreen({super.key, required this.userId, required this.userName});
 
   @override
+  // ignore: library_private_types_in_public_api
   _ViewScreenState createState() => _ViewScreenState();
 }
 
@@ -80,6 +81,7 @@ class _ViewScreenState extends State<ViewScreen> {
               dailyRecords.where((r) => r['type'] == 'Entrada').length >= 2) ||
           (!isEntry &&
               dailyRecords.where((r) => r['type'] == 'Saída').length >= 2)) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Limite diário atingido!')),
         );
@@ -115,6 +117,7 @@ class _ViewScreenState extends State<ViewScreen> {
         }
       });
     } catch (e) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao registrar ponto: $e')),
       );

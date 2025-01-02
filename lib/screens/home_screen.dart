@@ -8,6 +8,7 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _HomeScreenState createState() => _HomeScreenState();
 }
 
@@ -66,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.blue,
                 boxShadow: [
                   BoxShadow(
+                    // ignore: deprecated_member_use
                     color: Colors.black.withOpacity(0.4),
                     spreadRadius: 3,
                     blurRadius: 5,
