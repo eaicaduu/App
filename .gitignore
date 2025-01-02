@@ -1,0 +1,18 @@
+# Ignorar arquivos e pastas gerados automaticamente pelo Flutter
+.dart_tool/
+.packages
+build/
+android/.gradle/
+android/.idea/
+ios/Pods/
+pubspec.lock
+
+# Ignorar arquivos específicos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Ignorar arquivos temporários do editor
+*.iml
+*.log
+.idea/
+.vscode/
