@@ -1,22 +1,24 @@
+import 'package:app/screens/service/admin/attendence.dart';
+import 'package:app/screens/service/admin/create_user.dart';
+import 'package:app/screens/service/admin/delete_user.dart';
+import 'package:app/screens/service/admin/download.dart';
+import 'package:app/screens/service/admin/edit_user.dart';
+import 'package:app/screens/service/user_service.dart';
+import 'package:app/screens/service/values.dart';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../service/user_service.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:intl/intl.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _AdminScreenState createState() => _AdminScreenState();
+  AdminScreenState createState() => AdminScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen> {
+class AdminScreenState extends State<AdminScreen> {
   final UserService userService = UserService(Supabase.instance.client);
   List<Map<String, dynamic>> users = [];
+  List<String> attendanceRecords = [];
 
   @override
   void initState() {
@@ -31,305 +33,184 @@ class _AdminScreenState extends State<AdminScreen> {
     });
   }
 
-  Future<void> _downloadAttendanceRecords(int userId, String userName) async {
-    final records = await userService.getAttendanceRecords(userId);
-
-    final List<String> attendanceRecords = records.map((record) {
-      final time = DateTime.parse(record['time']);
-      final type = record['type'];
-      final formattedTime = DateFormat('dd/MM/yyyy HH:mm:ss').format(time);
-      return '$type: $formattedTime';
-    }).toList();
-
-    final pdf = pw.Document();
-
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Registros de Ponto - $userName',
-                  style: const pw.TextStyle(fontSize: 24)),
-              pw.SizedBox(height: 20),
-              ...attendanceRecords.map(
-                (record) =>
-                    pw.Text(record, style: const pw.TextStyle(fontSize: 14)),
-              ),
-            ],
-          );
-        },
+  void _showCreateUserDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => CreateUserDialog(
+        userService: userService,
+        onUserCreated: _fetchUsers,
       ),
     );
-
-    await Printing.sharePdf(
-      bytes: await pdf.save(),
-      filename: 'registro_ponto_$userName.pdf',
-    );
   }
 
-  void _showCreateUserDialog(BuildContext context) {
-    final TextEditingController nameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Novo Funcionário'),
-          content: TextField(
-            controller: nameController,
-            decoration: const InputDecoration(labelText: 'Nome Completo'),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Criar'),
-              onPressed: () async {
-                String nome = nameController.text.trim();
-                await userService.createUser(nome);
-                // ignore: use_build_context_synchronously
-                Navigator.of(context).pop();
-                await _fetchUsers();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _editUser(int userId) {
-    final TextEditingController nameController = TextEditingController();
-    final user = users.firstWhere((user) => user['id'] == userId);
-    nameController.text = user['name'];
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Editar Funcionário'),
-          content: TextField(
-            controller: nameController,
-            decoration: const InputDecoration(labelText: 'Nome Completo'),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Salvar'),
-              onPressed: () async {
-                String novoNome = nameController.text.trim();
-                if (novoNome.isNotEmpty) {
-                  try {
-                    await userService.updateUser(userId.toString(), novoNome);
-                    // ignore: use_build_context_synchronously
-                    Navigator.of(context).pop();
-                    await _fetchUsers();
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Funcionário atualizado com sucesso!')),
-                    );
-                  } catch (e) {
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Erro ao atualizar usuário: $e')),
-                    );
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('O nome não pode estar vazio.')),
-                  );
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void _downloadAttendanceRecords(int userId, String userName) async {
+    await downloadAttendanceRecords(userId, userName, userService);
   }
 
   void _deleteUser(int userId, String userName) async {
-    showDialog(
+    final result = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirmar Exclusão'),
-          content: Text('Deseja excluir $userName?'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Confirmar'),
-              onPressed: () async {
-                try {
-                  await userService.deleteUser(userId);
-                  setState(() {
-                    users.removeWhere((user) => user['id'] == userId);
-                  });
-                  // ignore: use_build_context_synchronously
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Funcionário excluído com sucesso!')),
-                  );
-                } catch (e) {
-                  // ignore: use_build_context_synchronously
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erro: $e')),
-                  );
-                }
-                // ignore: use_build_context_synchronously
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+      builder: (_) => DeleteUserScreen(
+        userId: userId,
+        userName: userName,
+        userService: userService,
+      ),
+    );
+    if (result == true) {
+      await _fetchUsers();
+    }
+  }
+
+  void _viewAttendanceRecords(int userId, String userName) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            AttendanceActionsScreen(
+          userId: userId,
+          userName: userName,
+          userService: userService,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          var tween = Tween(begin: const Offset(1.0, 0.0), end: Offset.zero)
+              .chain(CurveTween(curve: Curves.easeInOut));
+
+          return SlideTransition(
+              position: animation.drive(tween), child: child);
+        },
+      ),
     );
   }
 
-  Future<void> _viewAttendanceRecords(int userId, String userName) async {
-    final records = await userService.getAttendanceRecords(userId);
-
-    final List<String> attendanceRecords = records.map((record) {
-      final time = DateTime.parse(record['time']);
-      final type = record['type'];
-      final formattedTime = DateFormat('dd/MM/yyyy HH:mm:ss').format(time);
-      return '$type: $formattedTime';
-    }).toList();
-
-    showDialog(
-      // ignore: use_build_context_synchronously
+  void _editUser(int userId, String currentName, String currentUsername,
+      String currentPassword, bool isAdmin) async {
+    final result = await showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Registros de Ponto - $userName'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              itemCount: attendanceRecords.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(attendanceRecords[index]),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Fechar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+      builder: (_) => EditUserScreen(
+        userId: userId,
+        currentName: currentName,
+        currentUsername: currentUsername,
+        currentPassword: currentPassword,
+        isAdmin: isAdmin,
+        userService: userService,
+      ),
+    );
+    if (result == true) {
+      await _fetchUsers();
+    }
+  }
+
+  Widget _actionButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return IconButton(
+      icon: Icon(icon, color: color ?? Theme.of(context).primaryColor),
+      tooltip: tooltip,
+      onPressed: onPressed,
+      splashRadius: 24,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: getBackgroundColor(context),
       appBar: AppBar(
-        title: const Center(child: Text('GlobalNet Admin', style: TextStyle(fontSize: 28))),
+        backgroundColor: getBackgroundColor(context),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          iconSize: 30,
-          onPressed: () {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-              (Route<dynamic> route) => false,
-            );
-          },
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            iconSize: 34,
-            onPressed: () {
-              _showCreateUserDialog(context);
-            },
+            icon: const Icon(Icons.add_circle_outline),
+            iconSize: 32,
+            onPressed: () => _showCreateUserDialog(context),
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: users.length,
-        itemBuilder: (context, index) {
-          final user = users[index];
-          return ListTile(
-            title: Text(user['name'], style: const TextStyle(fontSize: 24)),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(1),
-                  decoration: const BoxDecoration(
+      body: users.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                final user = users[index];
+                return Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                child: IconButton(
-                  icon: const Icon(Icons.edit),
-                  iconSize: 35,
-                  onPressed: () {
-                    _editUser(user['id']);
-                  },
-                ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(1),
-                  decoration: const BoxDecoration(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          user['name']?.toString() ?? 'Sem Nome',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _actionButton(
+                            icon: Icons.calendar_today,
+                            tooltip: 'Ver Registros de Ponto',
+                            color: Colors.blue,
+                            onPressed: () => _viewAttendanceRecords(
+                                user['id'], user['name']),
+                          ),
+                          _actionButton(
+                            icon: Icons.download,
+                            tooltip: 'Baixar Registros em PDF',
+                            color: Colors.blue,
+                            onPressed: () => _downloadAttendanceRecords(
+                                user['id'], user['name']),
+                          ),
+                          _actionButton(
+                            icon: Icons.edit,
+                            tooltip: 'Editar',
+                            color: Colors.blue,
+                            onPressed: () => _editUser(
+                              user['id'],
+                              user['name'],
+                              user['username'],
+                              user['password'],
+                              user['admin'] == true,
+                            ),
+                          ),
+                          _actionButton(
+                            icon: Icons.delete,
+                            tooltip: 'Excluir',
+                            color: Colors.red.shade700,
+                            onPressed: () =>
+                                _deleteUser(user['id'], user['name']),
+                          ),
+                        ],
+                      )
+                    ],
                   ),
-                child: IconButton(
-                  icon: const Icon(Icons.delete),
-                  iconSize: 35,
-                  onPressed: () {
-                    _deleteUser(user['id'], user['name']);
-                  },
-                ),
-                ),
-          Container(
-          padding: const EdgeInsets.all(1),
-          decoration: const BoxDecoration(
-          ),
-          child:IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  iconSize: 35,
-                  onPressed: () {
-                    _viewAttendanceRecords(user['id'], user['name']);
-                  },
-                ),
-          ),
-          Container(
-          padding: const EdgeInsets.all(1),
-          decoration: const BoxDecoration(
-          ),
-          child:IconButton(
-                  icon: const Icon(Icons.download),
-                  iconSize: 35,
-                  onPressed: () {
-                    _downloadAttendanceRecords(user['id'], user['name']);
-                  },
-                ),
-          ),
-              ],
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }
