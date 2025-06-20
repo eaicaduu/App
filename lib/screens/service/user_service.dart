@@ -56,8 +56,26 @@ class UserService {
     }).eq('id', userId);
   }
 
-  // Registrar ponto
   Future<void> recordAttendance(int userId, DateTime time, String type) async {
+    final response = await client
+        .from('point')
+        .select()
+        .eq('user_id', userId)
+        .eq('year', time.year)
+        .eq('month', time.month)
+        .eq('day', time.day);
+
+    int countToday = (response as List).length;
+
+    String period;
+    if (countToday < 2) {
+      period = 'Manhã';
+    } else if (countToday < 4) {
+      period = 'Tarde';
+    } else {
+      period = 'Extra';
+    }
+
     await client.from('point').insert({
       'user_id': userId,
       'year': time.year,
@@ -67,6 +85,7 @@ class UserService {
       'minute': time.minute,
       'second': time.second,
       'type': type,
+      'period': period,
     });
   }
 

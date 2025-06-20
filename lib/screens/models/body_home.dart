@@ -202,9 +202,12 @@ class ViewScreenState extends State<BodyHomeScreen> {
                 }
                 final grouped = snapshot.data!;
                 final daysInDb = grouped.keys.toList();
-                return PointCard(
-                  grouped: grouped,
-                  monthDays: daysInDb,
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: PointCard(
+                    grouped: grouped,
+                    monthDays: daysInDb,
+                  ),
                 );
               },
             ),

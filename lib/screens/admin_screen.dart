@@ -19,6 +19,11 @@ class AdminScreenState extends State<AdminScreen> {
   final UserService userService = UserService(Supabase.instance.client);
   List<Map<String, dynamic>> users = [];
   List<String> attendanceRecords = [];
+  String empresa = "CLAIR FERREIRA PROVEDORES LTDA";
+  int ano = 2025;
+  int mes = 6;
+  String cargo = "Auxiliar";
+  String horario = "Segunda a sexta";
 
   @override
   void initState() {
@@ -44,7 +49,8 @@ class AdminScreenState extends State<AdminScreen> {
   }
 
   void _downloadAttendanceRecords(int userId, String userName) async {
-    await downloadAttendanceRecords(userId, userName, userService);
+    await downloadAttendanceRecords(
+        userId, userName, userService, empresa, mes, ano, cargo, horario);
   }
 
   void _deleteUser(int userId, String userName) async {

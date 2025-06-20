@@ -26,9 +26,13 @@ class PointCard extends StatelessWidget {
 
   Color invertColor(Color color) {
     return Color.fromARGB(
+      // ignore: deprecated_member_use
       color.alpha,
+      // ignore: deprecated_member_use
       255 - color.red,
+      // ignore: deprecated_member_use
       255 - color.green,
+      // ignore: deprecated_member_use
       255 - color.blue,
     );
   }
